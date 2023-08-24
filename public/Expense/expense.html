@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Manager</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container" style="margin-top: 1rem;">
+        <div class="row">
+            <div class="col-7 ">
+                <h1 class="fw-bolder" style="font-family: sans-serif; color:mediumaquamarine;">EXPENSE MANAGER</h1>
+            </div>
+            <div id="razorpayParent" class="col-5">
+                <input type="button" name="razorpay" id="razorpay" value="Buy Premium" style="background-color: mediumaquamarine; color: white; border-color: mediumaquamarine;" class="btn float-end">
+            </div>
+            <div class="m-2 offset-md-3 " style="background-color:mediumaquamarine ;">
+                <h3 style="color: white;">Expenses</h3>
+            </div>
+            <div class="row-cols-lg">
+                <ul id="list-items">
+
+                </ul>
+            </div>
+            <div id="paginateBtns" class="text-center">
+
+            </div>
+            <div id="show-leaderboard" class="m-2 offset-md-3  " style="background-color:mediumaquamarine ;">
+
+            </div>
+            <div class="row-cols-lg">
+                <ul id="leaderboard-items">
+
+                </ul>
+            </div>
+
+            <div class="col-md-5 offset-md-3 border p-2 md-2 shadow" style="background-color: mediumaquamarine; margin-top: 10rem;">
+                <form method="POST" onsubmit="saveExpense(event)">
+                    <div class="col-14">
+                        <label for="amount"></label>
+                        <input type="number" name="amount" id="amount" class="form-control" placeholder="Amount" required>
+                    </div>
+                    <label for="category"></label>
+                    <div class="col-14">
+                        <select class="form-select" name="category" id="category">
+                            <option value="food">Food</option>
+                            <option value="rent">Rent</option>
+                            <option value="grocery">Grocery</option>
+                            <option value="vehicle">Vehicle</option>
+                            <option value="outing">Outing</option>
+                            <option value="miscellaneous">Miscellaneous</option>
+                        </select>
+                    </div>
+                    <div class="col-14">
+                        <label for="description"></label>
+                        <input type="text" name="description" id="description" class="form-control" placeholder="Description">
+                    </div>
+                    <input type="submit" value="Add expense" class="btn btn-light float-end mt-2" style="border-color: mediumaquamarine;">
+                </form>
+            </div>
+        </div>
+    </div>
+    <div id="downloadBtn" class="float-end m-5">
+
+    </div>
+    <div>
+        <ul id="downloadFilesList"></ul>
+    </div>
+    <script>
+        function showPaginationButtons({currentPage, hasPreviousPage, previousPage, hasNextPage, nextPage}) {
+            const parentElm = document.getElementById('paginateBtns');
+            const expenseList = document.getElementById('list-items')
+            const pageQuantity = document.createElement('select');
+            pageQuantity.id = 'pageQuantity';
+            pageQuantity.innerHTML = `<option>Display quantity</option>
+                                      <option value="3">3</option>
+                                      <option value="5">5</option>
+                                      <option value="10">10</option>
+                                      <option value="15">15</option>
+                                      <option value="20">20</option>
+                                      <option value="30">30</option>
+                                      <option value="40">40</option>`;
+            parentElm.appendChild(pageQuantity);
+            pageQuantity.addEventListener('change', (event) => {
+                localStorage.setItem('pageQuantity', event.target.value);
+                getExpenses(currentPage);
+            })
+            if(hasPreviousPage) {
+                const childElm = document.createElement('input');
+                childElm.type = 'button';
+                childElm.value = 'previous';
+                childElm.classList = 'm-2'
+                parentElm.appendChild(childElm);
+                childElm.onclick = () => {
+                    parentElm.removeChild(childElm);
+                    expenseList.innerHTML = "";
+                    getExpenses(previousPage);
+                }
+            }
+
+            const childElm = document.createElement('input');
+            childElm.type = 'button';
+            childElm.value = currentPage;
+            childElm.classList = 'm-2 p-2';
+            parentElm.appendChild(childElm);
+            childElm.onclick = () => {
+                parentElm.removeChild(childElm);
+                expenseList.innerHTML = "";
+                getExpenses(currentPage);
+            }
+
+            if(hasNextPage) {
+                console.log(hasNextPage);
+                const childElm = document.createElement('input');
+                childElm.type = 'button';
+                childElm.value = 'next';
+                childElm.classList = 'm-2';
+                parentElm.appendChild(childElm);
+                childElm.onclick = () => {
+                    parentElm.removeChild(childElm);
+                    expenseList.innerHTML = "";
+                    getExpenses(nextPage);
+                }
+            }
+        }
+
+        async function getExpenses(page) {
+
+            let expenseListParentElm = document.getElementById('list-items');
+            const parentElm = document.getElementById('paginateBtns');
+            parentElm.innerHTML = "";
+            const pageQuantity = localStorage.getItem('pageQuantity');
+            const token = localStorage.getItem('token');
+            const response = await axios.get(`http://65.0.81.231:3000/expense/get-expense/${page}`, {headers: {"Authorization": token}, params: {"limit": localStorage.getItem('pageQuantity')}});
+            const {expenses, ...paginate} = response.data;
+            expenseListParentElm.innerHTML = "";
+            for(let i=0 ; i<response.data.expenses.length ; i++) {
+                    showOnScreen(expenses[i]);
+                }
+                showPaginationButtons(paginate);
+        }
+
+        async function showDownloadFilesList() {
+            const token = localStorage.getItem('token');
+            const parentElm = document.getElementById('downloadFilesList');
+            const response = await axios.get('http://65.0.81.231:3000/premium/download-list', {headers: {"Authorization": token}})
+            const li = document.createElement('li');
+            const a = document.createElement('a');
+            a.href = response.data.list.url;
+            a.textContent = response.data.list.url;
+            li.appendChild(a);
+            parentElm.appendChild(li);
+        }
+
+        function showDownloadButton() {
+            const token = localStorage.getItem('token');
+            const parentElm = document.getElementById('downloadBtn');
+            const btn = document.createElement('input')
+            btn.type = 'button';
+            btn.value = 'Download expenses';
+            btn.id = 'download';
+            parentElm.appendChild(btn);
+            document.getElementById('download').onclick = async (e) => {
+            e.preventDefault();
+            const response = await axios.get('http://65.0.81.231:3000/premium/download', {headers: {"Authorization": token}});
+            if(response.status === 200) {
+                const a = document.createElement('a');
+                a.href = response.data.fileUrl;
+                a.download = 'Expense.csv'
+                a.click();
+            }
+        }
+        }
+
+        function saveExpense(event) {
+            event.preventDefault();
+            const amount = event.target.amount.value;
+            const category = event.target.category.value;
+            const description = event.target.description.value;
+            const obj = {
+                amount, category, description
+            };
+            try {
+                const token = localStorage.getItem("token");
+                axios.post("http://65.0.81.231:3000/expense/add-expense", obj, {headers: {'Authorization': token}});
+                showOnScreen(obj);
+            } catch (error) {
+                console.log(error);
+            }
+        }
+
+        function showOnScreen(data) {
+            let parentElm = document.getElementById('list-items');
+            let childElm = document.createElement('li')
+            childElm.textContent = "Amount: Rs." + data.amount + " -  Category: " + data.category + " -  Description: " + data.description + " ";
+            parentElm.appendChild(childElm);
+            const deleteBtn = document.createElement('input');
+            deleteBtn.type = 'button';
+            deleteBtn.value = 'Delete';
+            childElm.appendChild(deleteBtn);
+            deleteBtn.onclick = () => {
+            try {
+                const token = localStorage.getItem('token');
+                axios.delete(`http://65.0.81.231:3000/expense/delete-expense/${data.id}`, {headers: {"Authorization": token}});
+                parentElm.removeChild(childElm);
+            } catch (error) {
+                console.log(error);
+            }
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                const page = 1;
+                const token = localStorage.getItem('token');
+                function parseJwt(token) {
+                    if (!token) {
+                        return;
+                    }
+                    const base64Url = token.split(".")[1];
+                    const base64 = base64Url.replace("-", "+").replace("_", "/");
+                    return JSON.parse(window.atob(base64));
+                }
+                const premiumUser = parseJwt(token);
+                if(premiumUser.user.isPremium) {
+                    showPremium();
+                    showDownloadButton();
+                    showDownloadFilesList();
+                }
+                let response = await axios.get(`http://65.0.81.231:3000/expense/get-expense/${page}`, {headers: {"Authorization": token}, params: {"limit": localStorage.getItem('pageQuantity')}});
+                let {expenses, ...paginate} = response.data;
+                getExpenses(paginate.currentPage);
+            } catch (error) {
+                console.log(error);
+            }
+        })
+
+        function showPremium() {
+            var rzpBtn = document.getElementById('razorpay');
+            var parentElm = document.getElementById('razorpayParent');
+            var showPremium = document.createElement('p')
+            showPremium.classList = "float-end";
+            showPremium.textContent = "You are premium user";
+            var lbdBtn = document.createElement('input');
+            var ldbParent = document.getElementById('show-leaderboard');
+            const leaderboardUl = document.getElementById('leaderboard-items')
+            lbdBtn.type = 'button';
+            lbdBtn.value = 'Leaderboards';
+            lbdBtn.id = 'leaderboardsButton'
+            lbdBtn.classList = 'btn float-end';
+            lbdBtn.style = "background-color: mediumaquamarine; color: white; border-color: mediumaquamarine;"
+            parentElm.removeChild(rzpBtn);
+            parentElm.appendChild(lbdBtn);
+            parentElm.appendChild(showPremium);
+            document.getElementById('leaderboardsButton').onclick = () => {
+                ldbParent.innerHTML = "";
+                leaderboardUl.innerHTML = "";
+                showLeaderboard();
+            }
+        }
+
+        async function showLeaderboard() {
+            var ldbParent = document.getElementById('show-leaderboard');
+            var h3 = document.createElement('h3');
+            h3.style = "color: white;";
+            h3.textContent = "Leaderboards";
+            ldbParent.appendChild(h3);
+            const leaderboardUl = document.getElementById('leaderboard-items')
+            const response = await axios.get('http://65.0.81.231:3000/premium/showLeaderboard');
+            console.log(response);
+            response.data.forEach(userDetails => {
+                leaderboardUl.innerHTML += `<li> Name: ${userDetails.name} - Total expenses: ${userDetails.totalExpense}`
+            });
+        }
+        document.getElementById('razorpay').onclick = async (e) => {
+
+            const token = localStorage.getItem('token');
+            const response = await axios.get('http://65.0.81.231:3000/purchase/premium-membership', {headers: {"Authorization": token}})
+            let options = {
+                "key": response.data.key_id,
+                "order_id": response.data.order.id,
+                "handler": async function (response) {
+                    const res = await axios.post('http://65.0.81.231:3000/purchase/updateTransactionStatus', {
+                        orderId: options.order_id,
+                        paymentId: response.razorpay_payment_id,
+                        status: 'SUCCESSFUL'
+                        }, {headers: {"Authorization": token}});
+                        showPremium();
+                        localStorage.setItem('token', res.data.token);
+                    alert("You are premium user");
+                }
+            };
+
+            const rzp = new Razorpay(options);
+            rzp.open();
+            e.preventDefault();
+
+            rzp.on('payment.failed', async function (response) {
+                console.log(response);
+                await axios.post('http://65.0.81.231:3000/purchase/updateTransactionStatus', { orderId: options.order_id, paymentId: response.razorpay_payment_id, status: 'FAILED' }, {headers: {"Authorization": token}});
+                alert("Payment Failed!!!");
+            })
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+</body>
+</html>

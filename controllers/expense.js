@@ -95,7 +95,7 @@ exports.getExpenses = async (req, res) => {
                                      currentPage: page,
                                      hasPreviousPage: (page > 1),
                                      previousPage: page-1,
-                                     hasNextPage: page*ITEMS_PER_PAGE < totalExpenses,
+                                     hasNextPage: page*ITEMS_PER_PAGE < (totalExpenses-1),
                                      nextPage: (page*1)+1                       
                                     });
     } catch (error) {

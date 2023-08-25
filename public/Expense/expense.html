@@ -36,7 +36,7 @@
                 </ul>
             </div>
 
-            <div class="col-md-5 offset-md-3 border p-2 md-2 shadow" style="background-color: mediumaquamarine; margin-top: 10rem;">
+            <div class="col-md-5 offset-md-3 border p-2 md-2 shadow" style="background-color: mediumaquamarine; ">
                 <form method="POST" onsubmit="saveExpense(event)">
                     <div class="col-14">
                         <label for="amount"></label>
@@ -62,12 +62,15 @@
             </div>
         </div>
     </div>
-    <div id="downloadBtn" class="float-end m-5">
-
-    </div>
     <div>
-        <ul id="downloadFilesList"></ul>
+        <div id="downloadBtn">
+
+        </div>
+        <div>
+            <ul id="downloadFilesList"></ul>
+        </div>
     </div>
+    
     <script>
         localStorage.setItem('pageQuantity', 3);
 
@@ -150,6 +153,8 @@
             const response = await axios.get('http://65.0.81.231:3000/premium/download-list', {headers: {"Authorization": token}})
             const li = document.createElement('li');
             const a = document.createElement('a');
+            console.log(response.data)
+            
             a.href = response.data.list.url;
             a.textContent = response.data.list.url;
             li.appendChild(a);
@@ -291,6 +296,8 @@
                         status: 'SUCCESSFUL'
                         }, {headers: {"Authorization": token}});
                         showPremium();
+                        showDownloadButton();
+                        showDownloadFilesList();
                         localStorage.setItem('token', res.data.token);
                     alert("You are premium user");
                 }

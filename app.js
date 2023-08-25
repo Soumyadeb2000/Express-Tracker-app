@@ -6,27 +6,27 @@ const helmet = require('helmet');
 
 const morgan = require('morgan')
 
-const User = require('./Expense Tracker Backend/models/user');
+const User = require('./models/user');
 
-const Expense = require('./Expense Tracker Backend/models/expense');
+const Expense = require('./models/expense');
 
-const Order = require('./Expense Tracker Backend/models/order');
+const Order = require('./models/order');
 
-const DownloadedFiles = require('./Expense Tracker Backend/models/downloadFiles');
+const DownloadedFiles = require('./models/downloadFiles');
 
-const ForgotPasswordRequest = require('./Expense Tracker Backend/models/forgot-password-requests');
+const ForgotPasswordRequest = require('./models/forgot-password-requests');
 
-const userRoutes = require('./Expense Tracker Backend/router/user');
+const userRoutes = require('./router/user');
 
-const expenseRoutes = require('./Expense Tracker Backend/router/expense');
+const expenseRoutes = require('./router/expense');
 
-const purchaseRoutes = require('./Expense Tracker Backend/router/purchase');
+const purchaseRoutes = require('./router/purchase');
 
-const premiumRoutes = require('./Expense Tracker Backend/router/premium');
+const premiumRoutes = require('./router/premium');
 
-const passwordRoutes = require('./Expense Tracker Backend/router/forgotpassword');
+const passwordRoutes = require('./router/forgotpassword');
 
-const sequelize = require('./Expense Tracker Backend/utils/database');
+const sequelize = require('./utils/database');
 
 const bodyParser = require('body-parser');
 

@@ -69,6 +69,8 @@
         <ul id="downloadFilesList"></ul>
     </div>
     <script>
+        localStorage.setItem('pageQuantity', 3);
+
         function showPaginationButtons({currentPage, hasPreviousPage, previousPage, hasNextPage, nextPage}) {
             const parentElm = document.getElementById('paginateBtns');
             const expenseList = document.getElementById('list-items')
@@ -212,6 +214,7 @@
         }
 
         window.addEventListener('DOMContentLoaded', async () => {
+
             try {
                 const page = 1;
                 const token = localStorage.getItem('token');

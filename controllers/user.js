@@ -12,7 +12,7 @@ exports.signup = (req, res, next) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
-    bcrypt.genSalt(process.env.SALT_ROUNDS, (err, salt) => {
+    bcrypt.genSalt((1*process.env.SALT_ROUNDS), (err, salt) => {
         try {
             bcrypt.hash(password, salt, async (err, hash) => {
                 try {

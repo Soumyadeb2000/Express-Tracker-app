@@ -12,15 +12,20 @@ exports.signup = (req, res, next) => {
     const name = req.body.name;
     const email = req.body.email;
     const password = req.body.password;
-    bcrypt.hash(password, process.env.SALT_ROUNDS, async (err, hash) => {
+    bcrypt.genSalt(process.env.SALT_ROUNDS, (err, salt) => {
         try {
-            const data = await User.create({name: name, email: email, password: hash, totalExpense: 0});
-            return res.status(200).json({newUserData: data});
+            bcrypt.hash(password, salt, async (err, hash) => {
+                try {
+                    const data = await User.create({name: name, email: email, password: hash, totalExpense: 0});
+                    return res.status(200).json({newUserData: data});
+                } catch (error) {
+                    console.log(err);
+                    return res.status(500).json({Error: 'User with similar email exists'});
+                }
+            })
         } catch (error) {
-            console.log(err);
-            return res.status(500).json({Error: 'User with similar email exists'});
+            console.log(error.message, err);
         }
-        
     })
 }
 

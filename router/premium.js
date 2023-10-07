@@ -10,8 +10,8 @@ const router = express.Router();
 
 router.get('/showLeaderboard', premiumController.leaderboards);
 
-router.get('/download', authentication.Authenticate, expenseController.download);
+// router.get('/download', authentication.Authenticate, expenseController.download);
 
-router.get('/download-list', authentication.Authenticate, premiumController.showDownloadedFiles)
+// router.get('/download-list', authentication.Authenticate, premiumController.showDownloadedFiles)
 
 module.exports = router;

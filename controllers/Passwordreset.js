@@ -1,12 +1,12 @@
 const Sib = require('sib-api-v3-sdk');
 
-const sequelize = require('../utils/database');
+// const sequelize = require('../utils/database');
 
 const uuid = require('uuid');
 
 const bcrypt = require('bcrypt');
 
-const ForgotPasswordRequest = require('../models/forgot-password-requests');
+const ForgotPassword = require('../models/forgot-password-requests');
 
 const User = require('../models/user');
 
@@ -47,7 +47,7 @@ exports.updatePassword =  async (req, res) => {
 };
 
 exports.resetPasswordForm = async (req, res) => {
-    const t = await sequelize.transaction(); 
+    // const t = await sequelize.transaction(); 
     try {
         const uuid = req.params.uuid;
         const request = await ForgotPasswordRequest.findOne({ where: { id: uuid }, transaction: t });
@@ -73,7 +73,7 @@ exports.resetPasswordForm = async (req, res) => {
 };
 
 exports.sendResetUrlMail = async (req, res) => {
-    const t = await sequelize.transaction();
+    // const t = await sequelize.transaction();
     try {
         const client = Sib.ApiClient.instance;
         const apiKey = client.authentications['api-key'];
@@ -81,8 +81,11 @@ exports.sendResetUrlMail = async (req, res) => {
         const tranEmailApi = new Sib.TransactionalEmailsApi();
         const receiverEmail = req.body.email;
         const id = uuid.v4();
-        const user = await User.findOne({where: {email: receiverEmail}});
-        await user.createForgotPasswordRequest({id: id, isActive: true}, {transaction: t});
+        // const user = await User.findOne({where: {email: receiverEmail}});
+        // await user.createForgotPasswordRequest({id: id, isActive: true}, {transaction: t});
+        const user = await User.findOne({email: receiverEmail}).select('_id');
+        const forgotpassword = new ForgotPassword({isActive: true, userId: user._id});
+        forgotpassword.save();
         const sender = {
             email: process.env.SENDER_EMAIL
         };
@@ -91,6 +94,7 @@ exports.sendResetUrlMail = async (req, res) => {
                 email: receiverEmail
             }
         ];
+        console.log('getting');
         await tranEmailApi.sendTransacEmail({
             sender,
             to: receivers,
@@ -98,10 +102,10 @@ exports.sendResetUrlMail = async (req, res) => {
             textContent: `Reset password link`,
             htmlContent: `<a href="http://localhost:3000/password/resetpassword/${id}">Reset Password</a>`
         })
-        await t.commit();
+        // await t.commit();
         console.log('mail sent');
     } catch (error) {
-        await t.rollback();
+        // await t.rollback();
         return res.status(500).json({Error: error})
     }
 }

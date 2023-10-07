@@ -4,10 +4,13 @@ const DownloadedFiles = require('../models/downloadFiles');
 
 exports.leaderboards = async (req, res, next) => {
     try {
-        var leaderboard = await User.findAll({
-            attributes: ['name', 'totalExpense'],
-            order: [['totalExpense', 'DESC']]
-        });
+        const leaderboard = await User.find()
+        .select('name totalExpense -_id')
+        .sort({totalExpense: -1})
+        // var leaderboard = await User.findAll({
+        //     attributes: ['name', 'totalExpense'],
+        //     order: [['totalExpense', 'DESC']]
+        // });
         res.status(201).json(leaderboard);
     } catch(error) {  
         res.status(500).json({Error: error});

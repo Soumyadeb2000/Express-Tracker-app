@@ -17,13 +17,14 @@ exports.purchasePremium = (req, res, reject) => {
             key_secret: process.env.RAZORPAY_KEY_SECRET
         })
         const amount = process.env.PREMIUM_PURCHASE_COST;
-        
         rzp.orders.create({amount, currency: "INR"}, async (err, order) => {
             if(err) {
                 console.log(err);
                 return res.status(500).json({Error: err})
             }
-            await req.user.createOrder({orderId: order.id, status: "Pending"});
+            const newOrder = new Order({orderId: order.id, status: "Pending", userId: req.user.id});
+            await newOrder.save();
+            // await req.user.createOrder({orderId: order.id, status: "Pending"});
             return res.status(201).json({order, key_id: rzp.key_id})
 
         })
@@ -38,17 +39,22 @@ exports.updateTransactionStatus = async (req, res, next) => {
         const orderId = req.body.orderId;
         const updatedPaymentId = req.body.paymentId;
         const status = req.body.status;
-        const orders = await Order.findAll({where: {orderId: orderId}});
-        const order = orders[0];
+        // const orders = await Order.findAll({where: {orderId: orderId}});
+        // const order = orders[0];
+        const order = await Order.findOne({orderId: orderId});
+        order.paymentId = updatedPaymentId;
+        order.status = status;
         if(status === "SUCCESSFUL") {
-            const promise1 = order.update({paymentId: updatedPaymentId, status: status});
-            const promise2 = req.user.update({isPremium: true}); 
+            const promise1 = order.save();
+            const promise2 = req.user.updateOne({isPremium: true});
+            // const promise1 = order.update({paymentId: updatedPaymentId, status: status});
+            // const promise2 = req.user.update({isPremium: true}); 
             await Promise.all([promise1, promise2]);
             return res.status(201).json({status: "Transaction successful", token: generateAccessToken(req.user)});
         }
         else {
-            const promise1 = order.update({paymentId: updatedPaymentId, status: status});
-            const promise2 = req.user.update({isPremium: false}); 
+            const promise1 = order.save();
+            const promise2 = req.user.updateOne({isPremium: false}); 
             await Promise.all([promise1, promise2]);
             return res.json({status: "Transaction failed"});
         }

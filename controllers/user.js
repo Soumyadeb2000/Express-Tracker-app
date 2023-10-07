@@ -16,7 +16,8 @@ exports.signup = (req, res, next) => {
         try {
             bcrypt.hash(password, salt, async (err, hash) => {
                 try {
-                    const data = await User.create({name: name, email: email, password: hash, totalExpense: 0});
+                    const user = new User({name: name, email: email, password: hash, totalExpense: 0})
+                    const data = await user.save();
                     return res.status(200).json({newUserData: data});
                 } catch (error) {
                     console.log(err);
@@ -33,8 +34,8 @@ exports.login = async (req, res, next) => {
     try {
         const email = req.body.email;
         const password = req.body.password;
-        const users = await User.findAll({where: {email: email}});
-        const user = users[0];
+        const user = await User.findOne({email: email});
+        //const user = users[0];
         if(user) {
             bcrypt.compare(password, user.password, (err, result) => {
                 if(result === true) {

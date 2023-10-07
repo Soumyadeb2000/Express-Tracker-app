@@ -37,7 +37,7 @@
                 name, email, password
             };
             try {
-                await axios.post("http://65.0.81.231:3000/user/signup",obj);
+                await axios.post("http://localhost:3000/user/signup",obj);
                 window.location.href = './login.html';
             } catch (error) {
                 alert(`${error}`);

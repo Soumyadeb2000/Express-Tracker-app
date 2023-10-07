@@ -26,7 +26,7 @@ const premiumRoutes = require('./router/premium');
 
 const passwordRoutes = require('./router/forgotpassword');
 
-const sequelize = require('./utils/database');
+const mongoose = require('mongoose');
 
 const bodyParser = require('body-parser');
 
@@ -37,7 +37,6 @@ require('dotenv').config();
 const app = express();
 
 const accessLog = fs.createWriteStream(path.join(__dirname, 'access.log'), {flags: 'a'})
-
 
 app.use(express.static('public'));
 
@@ -65,21 +64,28 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, `public/${req.url}`));
 });
 
-User.hasMany(Expense);
-Expense.belongsTo(User);
-
-User.hasMany(Order);
-Order.belongsTo(User);
-
-User.hasMany(ForgotPasswordRequest);
-ForgotPasswordRequest.belongsTo(User);
-
-DownloadedFiles.belongsTo(User);
-User.hasMany(DownloadedFiles);
-
-sequelize.sync()
+mongoose.connect(process.env.DB_URI)
 .then(() => {
-    console.log("Server Online...");
-    app.listen(process.env.PORT);
+    console.log("Connected");
+    app.listen(3000);
 })
-.catch(err => console.log(err))
+.catch(err => console.log(err));
+
+// User.hasMany(Expense);
+// Expense.belongsTo(User);
+
+// User.hasMany(Order);
+// Order.belongsTo(User);
+
+// User.hasMany(ForgotPasswordRequest);
+// ForgotPasswordRequest.belongsTo(User);
+
+// DownloadedFiles.belongsTo(User);
+// User.hasMany(DownloadedFiles);
+
+// sequelize.sync()
+// .then(() => {
+//     console.log("Server Online...");
+//     app.listen(process.env.PORT);
+// })
+// .catch(err => console.log(err))
